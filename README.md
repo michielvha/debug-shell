@@ -40,55 +40,66 @@ Debug Shell is a lightweight Alpine-based container that provides essential netw
 
 ```bash
 # Run interactively
-docker run -it --rm ghcr.io/<username>/debug-shell:latest
+docker run -it --rm ghcr.io/michielvha/debug-shell:latest
 
 # Run with network access to another container
-docker run -it --rm --network container:<container-name> ghcr.io/<username>/debug-shell:latest
+docker run -it --rm --network container:<container-name> ghcr.io/michielvha/debug-shell:latest
 
 # Run with host network (Linux only)
-docker run -it --rm --network host ghcr.io/<username>/debug-shell:latest
+docker run -it --rm --network host ghcr.io/michielvha/debug-shell:latest
+
+# For tools requiring capabilities (ping, tcpdump, nmap)
+docker run -it --rm --cap-add=NET_RAW ghcr.io/michielvha/debug-shell:latest
+
+# For strace debugging
+docker run -it --rm --cap-add=SYS_PTRACE ghcr.io/michielvha/debug-shell:latest
 ```
 
 ### Kubernetes
 
-#### As a Pod
+> [!TIP]
+> For production deployments, use our [Kustomize configurations](deployments/kustomize/) or [Helm chart](deployments/helm/debug-shell/) with configurable security profiles.
 
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: debug
-  namespace: default
-spec:
-  containers:
-  - name: debug-shell
-    image: ghcr.io/<username>/debug-shell:latest
-    command: ["/bin/bash"]
-    args: ["-c", "while true; do sleep 3600; done"]
+#### Quick Start with Helm
+
+```bash
+# Install with moderate security (default)
+helm install debug-shell oci://ghcr.io/michielvha/charts/debug-shell
+
+# Install with enhanced security (read-only filesystem)
+helm install debug-shell oci://ghcr.io/michielvha/charts/debug-shell \
+  -f https://raw.githubusercontent.com/michielvha/debug-shell/main/deployments/helm/debug-shell/values-enhanced.yaml
+```
+
+#### Quick Start with Kustomize
+
+```bash
+# Apply base configuration (moderate security)
+kubectl apply -k https://github.com/michielvha/debug-shell/deployments/kustomize/base
+
+# Apply enhanced security overlay
+kubectl apply -k https://github.com/michielvha/debug-shell/deployments/kustomize/overlays/enhanced-security
 ```
 
 #### As an Ephemeral Container (Kubernetes 1.23+)
 
 ```bash
-kubectl debug <pod-name> -it --image=ghcr.io/<username>/debug-shell:latest --target=<container-name>
+kubectl debug <pod-name> -it --image=ghcr.io/michielvha/debug-shell:latest --target=<container-name>
 ```
 
-#### As a Sidecar
+#### Deployment Options
 
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: app-with-debug
-spec:
-  containers:
-  - name: app
-    image: your-app:latest
-  - name: debug-shell
-    image: ghcr.io/<username>/debug-shell:latest
-    command: ["/bin/bash"]
-    args: ["-c", "while true; do sleep 3600; done"]
-```
+| Option | Use Case | Documentation |
+|--------|----------|---------------|
+| **[Helm Chart](deployments/helm/debug-shell/)** | Production deployments, CI/CD | [Helm README](deployments/helm/debug-shell/README.md) |
+| **[Kustomize Base](deployments/kustomize/base/)** | Simple deployments, GitOps | [Kustomize README](deployments/kustomize/base/README.md) |
+| **[Kustomize Overlays](deployments/kustomize/overlays/)** | Security profiles, customization | See overlays directory |
+
+All deployment options include:
+- ✅ Multiple security profiles (Moderate, Enhanced, Maximum)
+- ✅ Proper security contexts (non-root, capabilities, seccomp)
+- ✅ Resource limits
+- ✅ Ready-to-use configurations
 
 ## Common Use Cases
 
@@ -147,9 +158,23 @@ strace -p <pid>
 
 | Tag | Description | Example |
 |-----|-------------|---------|
-| `latest` | Latest stable release | `ghcr.io/user/debug-shell:latest` |
-| `{version}` | Semantic version | `ghcr.io/user/debug-shell:1.0.0` |
-| `{sha}` | Git commit SHA | `ghcr.io/user/debug-shell:abc1234` |
+| `latest` | Latest stable release | `ghcr.io/michielvha/debug-shell:latest` |
+| `{version}` | Semantic version | `ghcr.io/michielvha/debug-shell:1.0.0` |
+| `{sha}` | Git commit SHA | `ghcr.io/michielvha/debug-shell:abc1234` |
+
+## Helm Chart
+
+The Helm chart is published to OCI registry and can be installed directly:
+
+```bash
+# Install latest version
+helm install debug-shell oci://ghcr.io/michielvha/charts/debug-shell
+
+# Install specific version
+helm install debug-shell oci://ghcr.io/michielvha/charts/debug-shell --version 1.0.0
+```
+
+See the [Helm chart documentation](deployments/helm/debug-shell/README.md) for configuration options and security profiles.
 
 ## Comparison with netshoot
 
@@ -199,56 +224,17 @@ Some tools require specific Linux capabilities to function. These must be grante
 
 ### Docker Usage
 
-For tools requiring capabilities, add them when running:
+Most tools work without additional capabilities. For tools requiring elevated privileges:
 
-```bash
-# Basic usage (most tools work without capabilities)
-docker run -it --rm ghcr.io/<username>/debug-shell:latest
+| Tool | Capability | Docker Command |
+|-----|-----------|----------------|
+| `ping`, `tcpdump`, `nmap` | `NET_RAW` | `docker run -it --rm --cap-add=NET_RAW ghcr.io/michielvha/debug-shell:latest` |
+| `strace` | `SYS_PTRACE` | `docker run -it --rm --cap-add=SYS_PTRACE ghcr.io/michielvha/debug-shell:latest` |
 
-# For tcpdump or ping, add NET_RAW capability
-docker run -it --rm --cap-add=NET_RAW ghcr.io/<username>/debug-shell:latest
 
-# For strace, add SYS_PTRACE capability
-docker run -it --rm --cap-add=SYS_PTRACE ghcr.io/<username>/debug-shell:latest
-```
 
-### Kubernetes Usage
 
-Add capabilities via security context:
 
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: debug
-spec:
-  containers:
-  - name: debug-shell
-    image: ghcr.io/<username>/debug-shell:latest
-    securityContext:
-      runAsNonRoot: true
-      runAsUser: 1000
-      runAsGroup: 1000
-      allowPrivilegeEscalation: false
-      capabilities:
-        add:
-          - NET_RAW      # Required for tcpdump and ping
-        drop:
-          - ALL          # Drop all other capabilities
-    command: ["/bin/bash"]
-    args: ["-c", "while true; do sleep 3600; done"]
-```
-
-**For strace debugging:**
-```yaml
-securityContext:
-  capabilities:
-    add:
-      - NET_RAW
-      - SYS_PTRACE     # Required for strace
-    drop:
-      - ALL
-```
 
 ### Security Best Practices
 
@@ -256,22 +242,24 @@ securityContext:
 |----------|----------------|
 | **Run as non-root** | Container defaults to UID 1000 |
 | **Least privilege** | Only add capabilities you actually need |
-| **Drop capabilities** | In Kubernetes, explicitly drop ALL and add only what's needed |
-| **Read-only filesystem** | Consider using `readOnlyRootFilesystem: true` in production (see [Security Hardening Guide](docs/security-hardening.md)) |
-| **No privilege escalation** | Set `allowPrivilegeEscalation: false` |
+| **Drop capabilities** | All deployments drop ALL and add only required |
+| **Read-only filesystem** | Available in Enhanced and Maximum security profiles |
+| **No privilege escalation** | Enabled in all deployment configurations |
+| **Seccomp profile** | RuntimeDefault enabled in all profiles |
+| **Resource limits** | Configured in all deployment options |
 
-### Advanced Security Hardening
+### Security Profiles
 
-Additional hardening options available:
+Three security profiles are available in all deployment options:
 
-| Option | Status |
-|--------|--------|
-| Read-only root filesystem | Planned |
-| Seccomp profiles | Planned |
-| Resource limits | Planned |
-| Image signing | Planned |
+| Profile | Filesystem | Capabilities | Use Case |
+|---------|-----------|--------------|----------|
+| **Moderate** (default) | Writable | NET_RAW | Most users, simple deployments |
+| **Enhanced** | Read-only | NET_RAW | Security-conscious production |
+| **Maximum** | Read-only | None | Highly restricted environments |
 
-See the comprehensive [Security Hardening Guide](docs/security-hardening.md) for detailed implementation plans and security profiles.
+> [!NOTE]
+> See the [Security Hardening Guide](docs/security-hardening.md) for detailed information about each profile and tool compatibility.
 
 ### Vulnerability Management
 
@@ -281,6 +269,13 @@ See the comprehensive [Security Hardening Guide](docs/security-hardening.md) for
 | **Known Issues** | Tracked in [Security Vulnerabilities](docs/security-vulnerabilities.md) |
 | **Update Strategy** | Dockerfile uses `apk upgrade` to automatically include latest security patches from Alpine repos |
 | **Transparency** | All known vulnerabilities are documented with mitigation status |
+
+## Documentation
+
+- **[Deployment Guide](deployments/)** - Kustomize and Helm deployment options
+- **[Security Hardening Guide](docs/security-hardening.md)** - Security features and profiles
+- **[Security Vulnerabilities](docs/security-vulnerabilities.md)** - Known vulnerabilities and mitigation
+- **[Deployment Plan](docs/deployment-plan.md)** - Implementation details and roadmap
 
 ## Contributing
 

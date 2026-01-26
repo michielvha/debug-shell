@@ -1,0 +1,106 @@
+name: Test and Release Helm Chart
+
+on:
+  push:
+    branches:
+      - main
+      - release/*
+    paths:
+      - 'deployments/helm/**'
+      - '.github/workflows/helm-release.yml'
+  pull_request:
+    paths:
+      - 'deployments/helm/**'
+      - '.github/workflows/helm-release.yml'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: write
+  packages: write
+
+jobs:
+  test-helm-chart:
+    name: Test Helm Chart
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: "latest"
+
+      - name: Lint Helm chart
+        run: |
+          helm lint deployments/helm/debug-shell/
+          echo "✓ Chart linting passed"
+
+      - name: Template Helm chart
+        run: |
+          helm template debug-shell deployments/helm/debug-shell/
+          echo "✓ Chart templating successful"
+
+      - name: Test all security profiles
+        run: |
+          echo "Testing moderate security profile..."
+          helm template debug-shell deployments/helm/debug-shell/ -f deployments/helm/debug-shell/values-moderate.yaml > /dev/null
+          
+          echo "Testing enhanced security profile..."
+          helm template debug-shell deployments/helm/debug-shell/ -f deployments/helm/debug-shell/values-enhanced.yaml > /dev/null
+          
+          echo "Testing maximum security profile..."
+          helm template debug-shell deployments/helm/debug-shell/ -f deployments/helm/debug-shell/values-maximum.yaml > /dev/null
+          
+          echo "✓ All security profiles validated"
+
+      - name: Test deployment modes
+        run: |
+          echo "Testing Pod deployment mode..."
+          helm template debug-shell deployments/helm/debug-shell/ --set deploymentMode=pod > /dev/null
+          
+          echo "Testing Deployment mode..."
+          helm template debug-shell deployments/helm/debug-shell/ --set deploymentMode=deployment > /dev/null
+          
+          echo "Testing DaemonSet mode..."
+          helm template debug-shell deployments/helm/debug-shell/ --set deploymentMode=daemonset > /dev/null
+          
+          echo "✓ All deployment modes validated"
+
+  publish-helm-chart:
+    name: Publish Helm Chart
+    runs-on: ubuntu-latest
+    needs: test-helm-chart
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/'))
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # Fetch all history for GitVersion
+
+      - name: Tag with GitVersion
+        id: gitversion
+        uses: michielvha/gitversion-tag-action@main
+        with:
+          configFilePath: 'gitversion.yml'
+          prefix: "v"
+
+      - name: Publish Helm Chart to OCI
+        id: helm-publish
+        uses: michielvha/helm-oci-publish-action@main
+        with:
+          chart-path: deployments/helm/debug-shell
+          registry: ghcr.io/${{ github.repository_owner }}/charts
+          version: ${{ steps.gitversion.outputs.semVer }}
+          app-version: ${{ steps.gitversion.outputs.semVer }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Display chart outputs
+        run: |
+          echo "📦 Chart URL: ${{ steps.helm-publish.outputs.chart-url }}"
+          echo "📦 Chart file: ${{ steps.helm-publish.outputs.chart-file }}"
+          echo "📦 Chart name: ${{ steps.helm-publish.outputs.chart-name }}"
+          echo "📦 Chart version: ${{ steps.helm-publish.outputs.chart-version }}"
