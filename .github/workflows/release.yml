@@ -32,7 +32,7 @@ jobs:
           load: true
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.33.1
         with:
           image-ref: debug-shell:scan
           format: 'sarif'
@@ -40,10 +40,10 @@ jobs:
           severity: 'CRITICAL,HIGH,MEDIUM'
           exit-code: '1'  # Fail the build on any vulnerabilities
           scanners: 'vuln'
-          ignorefile: '.trivyignore'  # Ignore documented vulnerabilities
+          trivyignores: '.trivyignore'  # Ignore documented vulnerabilities
 
       - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
