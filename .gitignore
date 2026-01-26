@@ -1,0 +1,8 @@
+# Git ignore for debug-shell
+
+.DS_Store
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
