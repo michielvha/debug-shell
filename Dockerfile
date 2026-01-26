@@ -1,5 +1,6 @@
 # Minimal debug container for network and DNS troubleshooting
 # Based on Alpine Linux for minimal size and security
+# Note: Alpine version is pinned (not using 'latest' tag) and automatically updated via Renovate
 FROM alpine:3.23.2
 
 # Install all required packages in a single layer for minimal image size
@@ -20,6 +21,7 @@ RUN apk update && \
     netcat-openbsd \
     # Network inspection
     tcpdump \
+    nmap \
     net-tools \
     iproute2 \
     # System utilities
@@ -42,6 +44,8 @@ RUN addgroup -g 1000 debug && \
 RUN setcap cap_net_raw+ep /usr/sbin/tcpdump || true
 # ping (via busybox) needs NET_RAW for ICMP
 RUN setcap cap_net_raw+ep /bin/busybox || true
+# nmap needs NET_RAW for network scanning
+RUN setcap cap_net_raw+ep /usr/bin/nmap || true
 
 # Switch to non-root user
 USER debug:debug

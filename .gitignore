@@ -6,3 +6,6 @@
 *~
 .vscode/
 .idea/
+
+# Local documentation (not shared publicly)
+docs/

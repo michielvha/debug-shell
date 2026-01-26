@@ -8,34 +8,31 @@ Debug Shell is a lightweight Alpine-based container that provides essential netw
 
 ## Features
 
+- 🔒 **Security-First Design**: Runs as non-root user, capability-based access, hardened by default
 - 🐳 **Minimal Size**: Based on Alpine Linux (~20-30MB)
-- 🔒 **Security-Focused**: Runs as non-root user, capability-based access, regular updates
 - 🏗️ **Multi-Architecture**: Supports `linux/amd64` and `linux/arm64`
 - 🛠️ **Essential Tools**: Core DNS and network troubleshooting utilities
 - 📦 **OCI Compliant**: Works with any container registry
+- 📚 **Comprehensive Security**: See [Security Hardening Guide](docs/security-hardening.md) for details
 
 ## Included Tools
 
-### DNS Tools
-- **dig** - DNS lookup utility (from `bind-tools`)
-- **nslookup** - Interactive DNS query tool (from `bind-tools`)
-- **drill** - DNS client and resolver (from `ldns-tools`)
-
-### Network Connectivity
-- **ping** - Test network connectivity (from `iputils`)
-- **curl** - HTTP client for testing services
-- **wget** - HTTP client for downloading files
-- **nc/netcat** - Network utility for reading/writing network connections
-
-### Network Inspection
-- **tcpdump** - Packet analyzer for network troubleshooting
-- **netstat** - Network connections and routing table (from `net-tools`)
-- **ip** - Advanced network configuration (from `iproute2`)
-- **ss** - Socket statistics (from `iproute2`)
-
-### System Utilities
-- **strace** - System call tracer for debugging
-- **bash** - Enhanced shell for better script compatibility
+| Category | Tool | Description | Package |
+|----------|------|-------------|---------|
+| **DNS** | `dig` | DNS lookup utility | `bind-tools` |
+| | `nslookup` | Interactive DNS query tool | `bind-tools` |
+| | `drill` | DNS client and resolver | `ldns-tools` |
+| **Connectivity** | `ping` | Test network connectivity | `iputils` |
+| | `curl` | HTTP client for testing services | `curl` |
+| | `wget` | HTTP client for downloading files | `wget` |
+| | `nc`/`netcat` | Network utility for reading/writing connections | `netcat-openbsd` |
+| **Inspection** | `tcpdump` | Packet analyzer for network troubleshooting | `tcpdump` |
+| | `nmap` | Network mapper and port scanner | `nmap` |
+| | `netstat` | Network connections and routing table | `net-tools` |
+| | `ip` | Advanced network configuration | `iproute2` |
+| | `ss` | Socket statistics | `iproute2` |
+| **System** | `strace` | System call tracer for debugging | `strace` |
+| | `bash` | Enhanced shell for better script compatibility | `bash` |
 
 ## Usage
 
@@ -130,7 +127,12 @@ ip route show
 netstat -tulpn
 ss -tulpn
 
-# Capture packets (requires capabilities)
+# Port scanning (requires NET_RAW capability)
+nmap -p 80,443 example.com
+nmap -sn 192.168.1.0/24  # Ping scan
+nmap -sV example.com      # Version detection
+
+# Capture packets (requires NET_RAW capability)
 tcpdump -i any -n
 ```
 
@@ -143,9 +145,11 @@ strace -p <pid>
 
 ## Image Tags
 
-- `latest` - Latest stable release
-- `{version}` - Semantic version (e.g., `1.0.0`)
-- `{sha}` - Git commit SHA
+| Tag | Description | Example |
+|-----|-------------|---------|
+| `latest` | Latest stable release | `ghcr.io/user/debug-shell:latest` |
+| `{version}` | Semantic version | `ghcr.io/user/debug-shell:1.0.0` |
+| `{sha}` | Git commit SHA | `ghcr.io/user/debug-shell:abc1234` |
 
 ## Comparison with netshoot
 
@@ -158,9 +162,24 @@ strace -p <pid>
 | Multi-arch | ✅ Yes | ✅ Yes |
 | Security Updates | Regular | Infrequent |
 | Runs as Root | ❌ No (non-root by default) | ✅ Yes |
-| Security Hardening | ✅ Capability-based | ❌ Full root access |
+| Security Hardening | ✅ Capability-based, hardened | ❌ Full root access |
+| Security Documentation | ✅ Comprehensive guide | ❌ None |
 
-## Security Considerations
+## Security
+
+**Security is a core design principle of debug-shell.** Unlike other debug containers that run as root, debug-shell is built with security best practices from the ground up.
+
+### Key Security Features
+
+| Feature | Description |
+|---------|-------------|
+| **Non-root execution** | Runs as `debug` user (UID 1000) by default |
+| **Capability-based access** | Uses Linux capabilities instead of full root privileges |
+| **Minimal attack surface** | Only essential tools, no unnecessary packages |
+| **Regular security updates** | Pinned Alpine version automatically updated via Renovate |
+| **Hardening roadmap** | See [Security Hardening Guide](docs/security-hardening.md) for additional measures |
+
+### Security Considerations
 
 This container follows security best practices:
 
@@ -176,6 +195,7 @@ Some tools require specific Linux capabilities to function. These must be grante
 |------|-------------------|---------|
 | `tcpdump` | `NET_RAW` | Packet capture |
 | `ping` | `NET_RAW` | ICMP packets |
+| `nmap` | `NET_RAW` | Network scanning and port detection |
 
 ### Docker Usage
 
@@ -232,11 +252,35 @@ securityContext:
 
 ### Security Best Practices
 
-1. **Always run as non-root**: The container defaults to UID 1000
-2. **Principle of least privilege**: Only add capabilities you actually need
-3. **Drop all capabilities by default**: In Kubernetes, explicitly drop ALL and add only what's needed
-4. **Read-only root filesystem**: Consider using `readOnlyRootFilesystem: true` in production
-5. **No privilege escalation**: Set `allowPrivilegeEscalation: false`
+| Practice | Implementation |
+|----------|----------------|
+| **Run as non-root** | Container defaults to UID 1000 |
+| **Least privilege** | Only add capabilities you actually need |
+| **Drop capabilities** | In Kubernetes, explicitly drop ALL and add only what's needed |
+| **Read-only filesystem** | Consider using `readOnlyRootFilesystem: true` in production (see [Security Hardening Guide](docs/security-hardening.md)) |
+| **No privilege escalation** | Set `allowPrivilegeEscalation: false` |
+
+### Advanced Security Hardening
+
+Additional hardening options available:
+
+| Option | Status |
+|--------|--------|
+| Read-only root filesystem | Planned |
+| Seccomp profiles | Planned |
+| Resource limits | Planned |
+| Image signing | Planned |
+
+See the comprehensive [Security Hardening Guide](docs/security-hardening.md) for detailed implementation plans and security profiles.
+
+### Vulnerability Management
+
+| Aspect | Details |
+|--------|---------|
+| **Automated Scanning** | Every build is scanned with Trivy and fails on CRITICAL, HIGH, or MEDIUM vulnerabilities |
+| **Known Issues** | Tracked in [Security Vulnerabilities](docs/security-vulnerabilities.md) |
+| **Update Strategy** | Dockerfile uses `apk upgrade` to automatically include latest security patches from Alpine repos |
+| **Transparency** | All known vulnerabilities are documented with mitigation status |
 
 ## Contributing
 
