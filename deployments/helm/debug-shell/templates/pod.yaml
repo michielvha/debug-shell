@@ -1,0 +1,49 @@
+{{- if eq .Values.deploymentMode "pod" }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ .Values.pod.name | default (include "debug-shell.fullname" .) }}
+  namespace: {{ .Values.pod.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "debug-shell.labels" . | nindent 4 }}
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.serviceAccount.create }}
+  serviceAccountName: {{ include "debug-shell.serviceAccountName" . }}
+  {{- end }}
+  containers:
+  - name: debug-shell
+    image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+    imagePullPolicy: {{ .Values.image.pullPolicy }}
+    command: {{ .Values.pod.command }}
+    args: {{ .Values.pod.args }}
+    securityContext:
+      runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
+      runAsUser: {{ .Values.securityContext.runAsUser }}
+      runAsGroup: {{ .Values.securityContext.runAsGroup }}
+      allowPrivilegeEscalation: {{ .Values.securityContext.allowPrivilegeEscalation }}
+      readOnlyRootFilesystem: {{ include "debug-shell.readOnlyRootFilesystem" . }}
+      seccompProfile:
+        {{- toYaml .Values.securityContext.seccompProfile | nindent 8 }}
+      capabilities:
+        {{- include "debug-shell.capabilities" . | nindent 8 }}
+    resources:
+      {{- toYaml .Values.resources | nindent 6 }}
+    {{- if eq (include "debug-shell.volumesEnabled" .) "true" }}
+    volumeMounts:
+      {{- range .Values.volumes.tmpfs }}
+      - name: {{ . | replace "/" "-" | replace "_" "-" | trimPrefix "-" }}
+        mountPath: {{ . }}
+      {{- end }}
+    {{- end }}
+  {{- if eq (include "debug-shell.volumesEnabled" .) "true" }}
+  volumes:
+    {{- range .Values.volumes.tmpfs }}
+    - name: {{ . | replace "/" "-" | replace "_" "-" | trimPrefix "-" }}
+      emptyDir: {}
+    {{- end }}
+  {{- end }}
+{{- end }}

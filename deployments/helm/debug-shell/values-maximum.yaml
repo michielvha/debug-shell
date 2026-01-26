@@ -1,0 +1,28 @@
+# Maximum Security Profile
+# Read-only filesystem, NO capabilities, strict resource limits
+# WARNING: Disables ping, tcpdump, nmap, strace
+
+securityProfile: maximum
+
+securityContext:
+  readOnlyRootFilesystem: true
+
+capabilities:
+  drop:
+    - ALL
+  # No capabilities added - maximum security
+
+volumes:
+  enabled: true
+  tmpfs:
+    - /tmp
+    - /var/tmp
+    - /home/debug
+
+resources:
+  limits:
+    cpu: "1"
+    memory: "256Mi"
+  requests:
+    cpu: "100m"
+    memory: "128Mi"

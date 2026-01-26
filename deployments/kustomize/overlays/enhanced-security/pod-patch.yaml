@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: debug-shell
+spec:
+  containers:
+  - name: debug-shell
+    securityContext:
+      readOnlyRootFilesystem: true
+    volumeMounts:
+      - name: tmp
+        mountPath: /tmp
+      - name: var-tmp
+        mountPath: /var/tmp
+      - name: home
+        mountPath: /home/debug
+  volumes:
+    - name: tmp
+      emptyDir: {}
+    - name: var-tmp
+      emptyDir: {}
+    - name: home
+      emptyDir: {}

@@ -1,0 +1,24 @@
+# Moderate Security Profile (Default)
+# Writable filesystem, NET_RAW capability, simple and Docker-compatible
+
+securityProfile: moderate
+
+securityContext:
+  readOnlyRootFilesystem: false
+
+capabilities:
+  drop:
+    - ALL
+  add:
+    - NET_RAW
+
+volumes:
+  enabled: false
+
+resources:
+  limits:
+    cpu: "2"
+    memory: "512Mi"
+  requests:
+    cpu: "100m"
+    memory: "128Mi"

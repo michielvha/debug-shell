@@ -1,0 +1,69 @@
+# Default values for debug-shell
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Image configuration
+image:
+  repository: ghcr.io/michielvha/debug-shell
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Security profile: moderate, enhanced, maximum
+# moderate = writable filesystem, NET_RAW capability (default)
+# enhanced = read-only filesystem, NET_RAW capability, volume mounts
+# maximum = read-only filesystem, no capabilities, strict limits
+securityProfile: moderate
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false  # Default: writable (simple, Docker-compatible)
+  seccompProfile:
+    type: RuntimeDefault
+
+# Capabilities
+capabilities:
+  drop:
+    - ALL
+  add:
+    - NET_RAW  # For ping, tcpdump, nmap
+    # - SYS_PTRACE  # For strace (uncomment if needed)
+
+# Resource limits
+resources:
+  limits:
+    cpu: "2"
+    memory: "512Mi"
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+
+# Deployment mode: pod, deployment, daemonset
+deploymentMode: pod
+
+# Volume mounts (automatically configured based on security profile)
+volumes:
+  enabled: false  # Set to true for read-only filesystem
+  tmpfs:
+    - /tmp
+    - /var/tmp
+    - /home/debug
+
+# Service account
+serviceAccount:
+  create: true
+  name: ""
+
+# Pod settings
+pod:
+  name: debug-shell
+  namespace: default
+  command: ["/bin/bash"]
+  args: ["-c", "while true; do sleep 3600; done"]
+
+# Labels and annotations
+labels: {}
+annotations: {}

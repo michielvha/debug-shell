@@ -1,0 +1,17 @@
+apiVersion: v2
+name: debug-shell
+description: A minimal, security-first debug container for network and DNS troubleshooting in Kubernetes
+type: application
+version: 0.1.0
+appVersion: "latest"
+keywords:
+  - debug
+  - troubleshooting
+  - network
+  - dns
+  - security
+home: https://github.com/michielvha/debug-shell
+maintainers:
+  - name: Michiel van Haegenborgh
+    email: michiel@vhco.pro
+    url: https://vhco.pro

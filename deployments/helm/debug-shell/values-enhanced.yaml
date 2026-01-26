@@ -1,0 +1,29 @@
+# Enhanced Security Profile
+# Read-only filesystem, NET_RAW capability, volume mounts
+# Kubernetes-only feature
+
+securityProfile: enhanced
+
+securityContext:
+  readOnlyRootFilesystem: true
+
+capabilities:
+  drop:
+    - ALL
+  add:
+    - NET_RAW
+
+volumes:
+  enabled: true
+  tmpfs:
+    - /tmp
+    - /var/tmp
+    - /home/debug
+
+resources:
+  limits:
+    cpu: "2"
+    memory: "512Mi"
+  requests:
+    cpu: "100m"
+    memory: "128Mi"

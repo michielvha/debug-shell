@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: default
+
+resources:
+  - pod.yaml
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app: debug-shell
+      component: debug-tool
+
+images:
+  - name: ghcr.io/michielvha/debug-shell
+    newName: ghcr.io/michielvha/debug-shell
+    newTag: latest
