@@ -22,7 +22,30 @@ RUN apk update && \
     iproute2 \
     # System utilities
     strace \
+    # Required for setcap to set capabilities on binaries
+    libcap \
     && rm -rf /var/cache/apk/*
+
+# Create a non-root user for security best practices
+# Using fixed UID/GID 1000 for consistency
+RUN addgroup -g 1000 debug && \
+    adduser -D -u 1000 -G debug debug && \
+    # Create home directory for the user
+    mkdir -p /home/debug && \
+    chown -R debug:debug /home/debug
+
+# Set capabilities on binaries that need elevated privileges
+# Note: These capabilities must also be granted at runtime (Docker/Kubernetes)
+# tcpdump needs NET_RAW for packet capture
+RUN setcap cap_net_raw+ep /usr/sbin/tcpdump || true
+# ping (via busybox) needs NET_RAW for ICMP
+RUN setcap cap_net_raw+ep /bin/busybox || true
+
+# Switch to non-root user
+USER debug:debug
+
+# Set working directory to user's home
+WORKDIR /home/debug
 
 # Set default command to bash for interactive use
 CMD ["/bin/bash"]

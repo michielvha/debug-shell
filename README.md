@@ -9,7 +9,7 @@ Debug Shell is a lightweight Alpine-based container that provides essential netw
 ## Features
 
 - 🐳 **Minimal Size**: Based on Alpine Linux (~20-30MB)
-- 🔒 **Security-Focused**: Regular updates and minimal attack surface
+- 🔒 **Security-Focused**: Runs as non-root user, capability-based access, regular updates
 - 🏗️ **Multi-Architecture**: Supports `linux/amd64` and `linux/arm64`
 - 🛠️ **Essential Tools**: Core DNS and network troubleshooting utilities
 - 📦 **OCI Compliant**: Works with any container registry
@@ -157,18 +157,86 @@ strace -p <pid>
 | Tools | Core essentials | Extensive |
 | Multi-arch | ✅ Yes | ✅ Yes |
 | Security Updates | Regular | Infrequent |
+| Runs as Root | ❌ No (non-root by default) | ✅ Yes |
+| Security Hardening | ✅ Capability-based | ❌ Full root access |
 
 ## Security Considerations
 
-- The container runs as root by default (some tools like `tcpdump` require elevated privileges)
-- For production use, consider running with a non-root user where possible
-- In Kubernetes, you may need to add security contexts or capabilities for certain tools:
-  ```yaml
-  securityContext:
-    capabilities:
-      add:
-        - NET_RAW  # Required for tcpdump
-  ```
+This container follows security best practices:
+
+- **Runs as non-root user** (`debug` user, UID 1000) by default
+- **Minimal capabilities**: Only specific Linux capabilities are granted to binaries that need them
+- **Capability-based access**: Tools requiring elevated privileges use Linux capabilities instead of full root access
+
+### Required Capabilities
+
+Some tools require specific Linux capabilities to function. These must be granted at runtime:
+
+| Tool | Required Capability | Purpose |
+|------|-------------------|---------|
+| `tcpdump` | `NET_RAW` | Packet capture |
+| `ping` | `NET_RAW` | ICMP packets |
+
+### Docker Usage
+
+For tools requiring capabilities, add them when running:
+
+```bash
+# Basic usage (most tools work without capabilities)
+docker run -it --rm ghcr.io/<username>/debug-shell:latest
+
+# For tcpdump or ping, add NET_RAW capability
+docker run -it --rm --cap-add=NET_RAW ghcr.io/<username>/debug-shell:latest
+
+# For strace, add SYS_PTRACE capability
+docker run -it --rm --cap-add=SYS_PTRACE ghcr.io/<username>/debug-shell:latest
+```
+
+### Kubernetes Usage
+
+Add capabilities via security context:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: debug
+spec:
+  containers:
+  - name: debug-shell
+    image: ghcr.io/<username>/debug-shell:latest
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      allowPrivilegeEscalation: false
+      capabilities:
+        add:
+          - NET_RAW      # Required for tcpdump and ping
+        drop:
+          - ALL          # Drop all other capabilities
+    command: ["/bin/bash"]
+    args: ["-c", "while true; do sleep 3600; done"]
+```
+
+**For strace debugging:**
+```yaml
+securityContext:
+  capabilities:
+    add:
+      - NET_RAW
+      - SYS_PTRACE     # Required for strace
+    drop:
+      - ALL
+```
+
+### Security Best Practices
+
+1. **Always run as non-root**: The container defaults to UID 1000
+2. **Principle of least privilege**: Only add capabilities you actually need
+3. **Drop all capabilities by default**: In Kubernetes, explicitly drop ALL and add only what's needed
+4. **Read-only root filesystem**: Consider using `readOnlyRootFilesystem: true` in production
+5. **No privilege escalation**: Set `allowPrivilegeEscalation: false`
 
 ## Contributing
 
