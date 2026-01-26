@@ -3,8 +3,10 @@
 FROM alpine:latest
 
 # Install all required packages in a single layer for minimal image size
-# Using apk update to ensure latest packages
+# Using apk update and upgrade to ensure latest patched packages
+# Note: We upgrade packages to get latest security patches from Alpine repos
 RUN apk update && \
+    apk upgrade && \
     apk add --no-cache \
     # Shell
     bash \
