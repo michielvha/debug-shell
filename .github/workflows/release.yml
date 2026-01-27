@@ -81,8 +81,6 @@ jobs:
       
       - name: Install cosign
         uses: sigstore/cosign-installer@v4.0.0
-        with:
-          cosign-release: 'v2.2.0'
 
       - name: Sign container image
         env:
