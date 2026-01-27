@@ -93,13 +93,8 @@ jobs:
           IMAGE_REF="ghcr.io/${{ github.repository_owner }}/debug-shell"
           
           echo "🔐 Signing image by digest (most secure)..."
-          cosign sign --yes "${IMAGE_REF}@${IMAGE_DIGEST}"
+          cosign sign --yes "${IMAGE_REF}@${IMAGE_DIGEST}" || { echo "❌ Image signing failed"; exit 1; }
           
-          echo "🔐 Signing image by tag (for convenience)..."
-          cosign sign --yes "${IMAGE_REF}:${IMAGE_TAG}"
-          
-          echo "✅ Image signing completed"
-
       - name: Verify container image signature
         env:
           COSIGN_EXPERIMENTAL: 1
@@ -111,8 +106,7 @@ jobs:
           cosign verify \
             --certificate-identity-regexp "https://github.com/${{ github.repository }}/.*" \
             --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-            "${IMAGE_REF}@${IMAGE_DIGEST}"
-          echo "✅ Signature verification successful"
+            "${IMAGE_REF}@${IMAGE_DIGEST}" || { echo "❌ Signature verification failed"; exit 1; }
       
       - name: Display outputs
         run: |
