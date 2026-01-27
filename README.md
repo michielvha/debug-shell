@@ -182,7 +182,6 @@ See the [Helm chart documentation](deployments/helm/debug-shell/README.md) for c
 | **Capability-based access** | Uses Linux capabilities instead of full root privileges |
 | **Minimal attack surface** | Only essential tools, no unnecessary packages |
 | **Regular security updates** | Pinned Alpine version automatically updated via Renovate |
-| **Hardening roadmap** | See [Security Hardening Guide](docs/security-hardening.md) for additional measures |
 
 ### Security Considerations
 
@@ -222,19 +221,6 @@ Most tools work without additional capabilities. For tools requiring elevated pr
 | **No privilege escalation** | Enabled in all deployment configurations |
 | **Seccomp profile** | RuntimeDefault enabled in all profiles |
 | **Resource limits** | Configured in all deployment options |
-
-### Security Profiles
-
-Three security profiles are available in all deployment options:
-
-| Profile | Filesystem | Capabilities | Use Case |
-|---------|-----------|--------------|----------|
-| **Moderate** (default) | Writable | NET_RAW | Most users, simple deployments |
-| **Enhanced** | Read-only | NET_RAW | Security-conscious production |
-| **Maximum** | Read-only | None | Highly restricted environments |
-
-> [!NOTE]
-> See the [Security Hardening Guide](docs/security-hardening.md) for detailed information about each profile and tool compatibility.
 
 ### Vulnerability Management
 
