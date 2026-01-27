@@ -95,12 +95,6 @@ kubectl debug <pod-name> -it --image=ghcr.io/michielvha/debug-shell:latest --tar
 | **[Kustomize Base](deployments/kustomize/base/)** | Simple deployments, GitOps | [Kustomize README](deployments/kustomize/base/README.md) |
 | **[Kustomize Overlays](deployments/kustomize/overlays/)** | Security profiles, customization | See overlays directory |
 
-All deployment options include:
-- ✅ Multiple security profiles (Moderate, Enhanced, Maximum)
-- ✅ Proper security contexts (non-root, capabilities, seccomp)
-- ✅ Resource limits
-- ✅ Ready-to-use configurations
-
 ## Common Use Cases
 
 ### DNS Troubleshooting
@@ -176,20 +170,6 @@ helm install debug-shell oci://ghcr.io/michielvha/charts/debug-shell --version 1
 
 See the [Helm chart documentation](deployments/helm/debug-shell/README.md) for configuration options and security profiles.
 
-## Comparison with netshoot
-
-| Feature | Debug Shell | netshoot |
-|---------|-------------|----------|
-| Base Image | Alpine Linux | Alpine Linux |
-| Size | ~20-30MB | ~100MB+ |
-| Maintenance | Active | Limited |
-| Tools | Core essentials | Extensive |
-| Multi-arch | ✅ Yes | ✅ Yes |
-| Security Updates | Regular | Infrequent |
-| Runs as Root | ❌ No (non-root by default) | ✅ Yes |
-| Security Hardening | ✅ Capability-based, hardened | ❌ Full root access |
-| Security Documentation | ✅ Comprehensive guide | ❌ None |
-
 ## Security
 
 **Security is a core design principle of debug-shell.** Unlike other debug containers that run as root, debug-shell is built with security best practices from the ground up.
@@ -230,11 +210,6 @@ Most tools work without additional capabilities. For tools requiring elevated pr
 |-----|-----------|----------------|
 | `ping`, `tcpdump`, `nmap` | `NET_RAW` | `docker run -it --rm --cap-add=NET_RAW ghcr.io/michielvha/debug-shell:latest` |
 | `strace` | `SYS_PTRACE` | `docker run -it --rm --cap-add=SYS_PTRACE ghcr.io/michielvha/debug-shell:latest` |
-
-
-
-
-
 
 ### Security Best Practices
 
@@ -307,11 +282,6 @@ Images are signed by both digest and tag. The digest signature is immutable; tag
 | **Supply chain integrity** | Verifies the image originated from this repository's build process |
 | **Public audit trail** | All signatures are recorded in Rekor and can be queried |
 | **Policy enforcement** | Compatible with Kubernetes admission controllers like [Kyverno](https://kyverno.io/) to enforce signature verification |
-
-
-## Contributing
-
-This is a community-maintained project. Contributions are welcome!
 
 ## Support
 
