@@ -79,6 +79,40 @@ jobs:
           platforms: 'linux/amd64,linux/arm64'
           context: '.'
       
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v4
+        with:
+          cosign-release: 'v2.2.0'
+
+      - name: Sign container image
+        env:
+          COSIGN_EXPERIMENTAL: 1
+          IMAGE_DIGEST: ${{ steps.docker-build.outputs.image-digest }}
+          IMAGE_TAG: ${{ steps.gitversion.outputs.semver }}
+        run: |
+          IMAGE_REF="ghcr.io/${{ github.repository_owner }}/debug-shell"
+          
+          echo "🔐 Signing image by digest (most secure)..."
+          cosign sign --yes "${IMAGE_REF}@${IMAGE_DIGEST}"
+          
+          echo "🔐 Signing image by tag (for convenience)..."
+          cosign sign --yes "${IMAGE_REF}:${IMAGE_TAG}"
+          
+          echo "✅ Image signing completed"
+
+      - name: Verify container image signature
+        env:
+          COSIGN_EXPERIMENTAL: 1
+          IMAGE_DIGEST: ${{ steps.docker-build.outputs.image-digest }}
+        run: |
+          IMAGE_REF="ghcr.io/${{ github.repository_owner }}/debug-shell"
+          
+          echo "🔍 Verifying image signature..."
+          cosign verify "${IMAGE_REF}@${IMAGE_DIGEST}"
+          echo "✅ Signature verification successful"
+      
       - name: Display outputs
         run: |
           echo "📦 Image digest: ${{ steps.docker-build.outputs.image-digest }}"
+          echo "📦 Image reference: ghcr.io/${{ github.repository_owner }}/debug-shell:${{ steps.gitversion.outputs.semver }}"
+          echo "🔐 Image is signed with cosign (keyless signing via GitHub OIDC)"

@@ -270,20 +270,48 @@ Three security profiles are available in all deployment options:
 | **Update Strategy** | Dockerfile uses `apk upgrade` to automatically include latest security patches from Alpine repos |
 | **Transparency** | All known vulnerabilities are documented with mitigation status |
 
-## Documentation
+### Image Signing and Verification
 
-- **[Deployment Guide](deployments/)** - Kustomize and Helm deployment options
-- **[Security Hardening Guide](docs/security-hardening.md)** - Security features and profiles
-- **[Security Vulnerabilities](docs/security-vulnerabilities.md)** - Known vulnerabilities and mitigation
-- **[Deployment Plan](docs/deployment-plan.md)** - Implementation details and roadmap
+All container images are signed with [cosign](https://github.com/sigstore/cosign) using keyless signing via GitHub OIDC. This provides supply chain security and ensures image integrity.
+
+#### Verifying Image Signatures
+
+You can verify that an image is signed and hasn't been tampered with:
+
+```bash
+# Install cosign (if not already installed)
+brew install cosign  # macOS
+# or download from https://github.com/sigstore/cosign/releases
+
+# Verify image by tag
+cosign verify ghcr.io/michielvha/debug-shell:latest
+
+# Verify image by digest (most secure)
+cosign verify ghcr.io/michielvha/debug-shell@sha256:<digest>
+```
+
+#### How It Works
+
+Images are signed using [cosign](https://github.com/sigstore/cosign) with keyless signing. The GitHub Actions workflow authenticates via OIDC to [Sigstore](https://www.sigstore.dev/), which issues a short-lived certificate used to sign the image. Signatures are recorded in [Rekor](https://rekor.sigstore.dev/), Sigstore's public transparency log.
+
+Images are signed by both digest and tag. The digest signature is immutable; tag signatures allow verification without needing the exact digest.
+
+> [!NOTE]
+> No long-lived keys are required. The OIDC token from GitHub Actions is used automatically, and certificates expire quickly.
+
+#### Capabilities
+
+| Feature | Description |
+|---------|-------------|
+| **Tamper detection** | Modified images will fail verification |
+| **Supply chain integrity** | Verifies the image originated from this repository's build process |
+| **Public audit trail** | All signatures are recorded in Rekor and can be queried |
+| **Policy enforcement** | Compatible with Kubernetes admission controllers like [Kyverno](https://kyverno.io/) to enforce signature verification |
+
 
 ## Contributing
 
 This is a community-maintained project. Contributions are welcome!
-
-## License
-
-[Add your license here]
 
 ## Support
 
