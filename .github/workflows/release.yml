@@ -108,7 +108,10 @@ jobs:
           IMAGE_REF="ghcr.io/${{ github.repository_owner }}/debug-shell"
           
           echo "🔍 Verifying image signature..."
-          cosign verify "${IMAGE_REF}@${IMAGE_DIGEST}"
+          cosign verify \
+            --certificate-identity-regexp "https://github.com/${{ github.repository }}/.*" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+            "${IMAGE_REF}@${IMAGE_DIGEST}"
           echo "✅ Signature verification successful"
       
       - name: Display outputs

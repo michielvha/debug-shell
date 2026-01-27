@@ -1,6 +1,6 @@
-# Debug Shell Deployments
+# Debug Shell Deployment options
 
-We supply both a helmchart and kustomize method for deploying debug-shell in kubernetes
+We supply a [helm chart](./helm/debug-shell/) and [kustomize](./kustomize/) method for deploying **debug-shell** in kubernetes
 
 ### Security Profiles
 
@@ -12,5 +12,5 @@ Three security profiles are available in all deployment options:
 | **Enhanced** | Read-only | NET_RAW | Security-conscious production |
 | **Maximum** | Read-only | None | Highly restricted environments |
 
-> [!NOTE]
-> See the [Security Hardening Guide](docs/security-hardening.md) for detailed information about each profile and tool compatibility.
+<!-- > [!NOTE]
+> See the [Security Hardening Guide](docs/security-hardening.md) for detailed information about each profile and tool compatibility. -->
