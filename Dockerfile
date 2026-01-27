@@ -1,11 +1,9 @@
 # Minimal debug container for network and DNS troubleshooting
 # Based on Alpine Linux for minimal size and security
-# Note: Alpine version is pinned (not using 'latest' tag) and automatically updated via Renovate
 FROM alpine:3.23.2
 
 # Install all required packages in a single layer for minimal image size
 # Using apk update and upgrade to ensure latest patched packages
-# Note: We upgrade packages to get latest security patches from Alpine repos
 RUN apk update && \
     apk upgrade && \
     apk add --no-cache \
@@ -31,7 +29,6 @@ RUN apk update && \
     && rm -rf /var/cache/apk/*
 
 # Create a non-root user for security best practices
-# Using fixed UID/GID 1000 for consistency
 RUN addgroup -g 1000 debug && \
     adduser -D -u 1000 -G debug debug && \
     # Create home directory for the user
