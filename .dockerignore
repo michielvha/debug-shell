@@ -6,3 +6,5 @@
 .dockerignore
 README.md
 *.md
+gitversion.yml
+deployments
