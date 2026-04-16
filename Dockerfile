@@ -1,6 +1,6 @@
 # Minimal debug container for network and DNS troubleshooting
 # Based on Alpine Linux for minimal size and security
-FROM alpine:3.23.3
+FROM alpine:3.23.4
 
 # Install all required packages in a single layer for minimal image size
 # Using apk update and upgrade to ensure latest patched packages
