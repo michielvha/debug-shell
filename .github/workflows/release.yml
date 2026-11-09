@@ -31,6 +31,9 @@ jobs:
           tags: debug-shell:scan
           load: true
 
+      - name: Test container tools and security contexts
+        run: bash tests/image-smoke.sh debug-shell:scan
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         with:

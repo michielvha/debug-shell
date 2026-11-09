@@ -1,6 +1,6 @@
 # Minimal debug container for network and DNS troubleshooting
 # Based on Alpine Linux for minimal size and security
-FROM alpine:3.24.4
+FROM alpine:3.24.4@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
 
 # Install all required packages in a single layer for minimal image size
 # Using apk update and upgrade to ensure latest patched packages
@@ -12,6 +12,7 @@ RUN apk update && \
     # DNS tools
     bind-tools \
     ldns-tools \
+    drill \
     # Network connectivity
     iputils \
     curl \
@@ -35,14 +36,11 @@ RUN addgroup -g 1000 debug && \
     mkdir -p /home/debug && \
     chown -R debug:debug /home/debug
 
-# Set capabilities on binaries that need elevated privileges
-# Note: These capabilities must also be granted at runtime (Docker/Kubernetes)
-# tcpdump needs NET_RAW for packet capture
-RUN setcap cap_net_raw+ep /usr/sbin/tcpdump || true
-# ping (via busybox) needs NET_RAW for ICMP
-RUN setcap cap_net_raw+ep /bin/busybox || true
-# nmap needs NET_RAW for network scanning
-RUN setcap cap_net_raw+ep /usr/bin/nmap || true
+# Keep BusyBox applets usable when NET_RAW is dropped.
+RUN chmod u-s /bin/ping && \
+    setcap cap_net_raw+ep /bin/ping && \
+    setcap cap_net_raw+ep /usr/bin/tcpdump && \
+    setcap cap_net_raw+ep /usr/bin/nmap
 
 # Switch to non-root user
 USER debug:debug
