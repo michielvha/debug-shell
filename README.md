@@ -21,7 +21,7 @@ Debug Shell is a lightweight Alpine-based container that provides essential netw
 |----------|------|-------------|---------|
 | **DNS** | `dig` | DNS lookup utility | `bind-tools` |
 | | `nslookup` | Interactive DNS query tool | `bind-tools` |
-| | `drill` | DNS client and resolver | `ldns-tools` |
+| | `drill` | DNS client and resolver | `drill` |
 | **Connectivity** | `ping` | Test network connectivity | `iputils` |
 | | `curl` | HTTP client for testing services | `curl` |
 | | `wget` | HTTP client for downloading files | `wget` |
@@ -201,6 +201,17 @@ Some tools require specific Linux capabilities to function. These must be grante
 | `ping` | `NET_RAW` | ICMP packets |
 | `nmap` | `NET_RAW` | Network scanning and port detection |
 
+File capabilities are set on the individual `ping`, `tcpdump`, and `nmap` binaries.
+BusyBox has no file capabilities, so its general-purpose commands remain usable when
+all runtime capabilities are dropped. Ping does not use a setuid root bit.
+
+Docker's `--security-opt no-new-privileges` prevents this non-root image from
+acquiring NET_RAW through file capabilities, even with `--cap-add=NET_RAW`.
+DNS and HTTP tools still work in that mode, but packet capture and raw scans need
+a runtime that supplies effective NET_RAW or the Docker invocation shown below
+without `no-new-privileges`. Existing Kubernetes security settings are unchanged;
+adding NET_RAW alone does not establish that the runtime made it effective.
+
 ### Docker Usage
 
 Most tools work without additional capabilities. For tools requiring elevated privileges:
@@ -268,6 +279,20 @@ Images are signed by both digest and tag. The digest signature is immutable; tag
 | **Supply chain integrity** | Verifies the image originated from this repository's build process |
 | **Public audit trail** | All signatures are recorded in Rekor and can be queried |
 | **Policy enforcement** | Compatible with Kubernetes admission controllers like [Kyverno](https://kyverno.io/) to enforce signature verification |
+
+## Testing the Image
+
+Build and test locally:
+
+```bash
+docker build -t debug-shell:test .
+bash tests/image-smoke.sh debug-shell:test
+```
+
+The smoke tests run as UID 1000 with a read-only filesystem. They check DNS tool
+availability and local HTTP connectivity without capabilities, then loopback ping,
+packet capture and raw scanning with only NET_RAW. The container release workflow
+runs the same tests before its vulnerability scan and publication jobs.
 
 ## Support
 
