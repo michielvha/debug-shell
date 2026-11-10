@@ -280,6 +280,12 @@ Images are signed by both digest and tag. The digest signature is immutable; tag
 | **Public audit trail** | All signatures are recorded in Rekor and can be queried |
 | **Policy enforcement** | Compatible with Kubernetes admission controllers like [Kyverno](https://kyverno.io/) to enforce signature verification |
 
+## Release Versioning
+
+Both release workflows use the configuration bundled with the SHA-pinned
+`gitversion-tag-action`, without a repository-specific GitVersion file.
+Git tags use the `v` prefix; image and chart versions omit it.
+
 ## Testing the Image
 
 Build and test locally:
