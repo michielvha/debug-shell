@@ -1,7 +1,7 @@
 <h1 align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/debug-shell-banner-dark.png">
-    <img src="assets/debug-shell-banner-light.png" alt="Debug Shell banner for DNS and network troubleshooting on Docker and Kubernetes." width="100%">
+    <source media="(prefers-color-scheme: dark)" srcset="assets/debug-shell-signature-readme-dark.svg">
+    <img src="assets/debug-shell-signature-readme-light.svg" alt="Debug Shell banner for DNS and network troubleshooting on Docker and Kubernetes." width="100%">
   </picture>
 </h1>
 
