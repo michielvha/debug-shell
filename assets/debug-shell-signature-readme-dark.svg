@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
-      <title id="title">Debug Shell: Network and DNS troubleshooting for Docker and Kubernetes.</title><desc id="desc">. . michielvha/debug-shell</desc>
+      <title id="title">Debug Shell: Network and DNS troubleshooting for Docker and Kubernetes.</title><desc id="desc">michielvha/debug-shell</desc>
       <defs>
         <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%"><stop stop-color="#33cccc"/><stop offset=".5" stop-color="#3366ff"/><stop offset="1" stop-color="#d924ed"/></linearGradient>
         <radialGradient id="wash"><stop stop-color="#3366ff" stop-opacity=".12"/><stop offset="1" stop-color="#3366ff" stop-opacity="0"/></radialGradient>
