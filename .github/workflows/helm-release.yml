@@ -26,10 +26,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Helm
-        uses: azure/setup-helm@v5
+        uses: azure/setup-helm@2f5e7bc67f1f9972ab16657bb795f36d8f04de0e # v5.1.0
         with:
           version: "latest"
 
@@ -77,20 +77,19 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0  # Fetch all history for GitVersion
 
       - name: Tag with GitVersion
         id: gitversion
-        uses: michielvha/gitversion-tag-action@main
+        uses: michielvha/gitversion-tag-action@8cf5869816cf71437052ac97d086e00526bf2d89 # v7.0.4
         with:
-          configFilePath: 'gitversion.yml'
           prefix: "v"
 
       - name: Publish Helm Chart to OCI
         id: helm-publish
-        uses: michielvha/helm-oci-publish-action@main
+        uses: michielvha/helm-oci-publish-action@922e3ba68b68a1d6e183e50cfb4879294ff781f7 # v0.1.5
         with:
           chart-path: deployments/helm/debug-shell
           registry: ghcr.io/${{ github.repository_owner }}/charts
