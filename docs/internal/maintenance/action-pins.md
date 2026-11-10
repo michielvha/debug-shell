@@ -24,7 +24,8 @@ Required checks:
 - Run actionlint, Bash smoke-test syntax, Helm lint and all security-profile/deployment-mode templates, and git diff --check.
 - Run GitVersion 6.8.0 with the exact bundled configuration against a full-history simulated main merge of the committed source. Observe the computed next semantic version, without publishing tags.
 - Preserve existing image inputs and validate the previously published image remains accessible. Obtain independent maintenance review at the exact source/record commit before publication.
-- Publish one clean PR, observe applicable CI, merge normally under the owner's continuing rollout request, and observe the resulting image/chart release. Package linkage/access must be restored before claiming a completed release.
+
+Delivery sequence: after independent review, publish one clean PR, observe applicable CI, merge normally under the owner's continuing rollout request, and observe the resulting image/chart release. Package linkage/access must be restored before claiming a completed release.
 
 ## Evidence
 
@@ -50,6 +51,10 @@ The CodeQL repository's latest overall release is a tool bundle; the selected v4
 
 The action's bundled configuration has Git blob ID `d4eddd65b930fd569654f686e646e33ae366846a`. Its installer selects GitVersion 6.8.0. The official linux-x64 release archive was verified against its independently fetched release-asset SHA-256 `8e7ede2369fb8138b40d3831a36bcddfee5836c840f749b9d604788a44c260f9`.
 
+The verified GitVersion executable reports `6.8.0+Branch.main.Sha.cf6a76c393a467678f773cab4bc8eb924f6076b7`. A full-history disposable clone simulated a main merge of source commit `8fdf1aceb11e08d323196f8f10e09c6e096d01b6`, with the intended chore merge message. Running that binary with the exact bundled file and `/output json /nofetch /nonormalize` returned SemVer and FullSemVer `0.6.6`, BranchName `main`, and VersionSourceSha `c8bf53d95e2995dd6cefe673b6404cf71a4868fb`. This establishes the expected `v0.6.6` Git tag and `0.6.6` artifact versions using the existing prefixed/unprefixed baseline, without creating any remote tag.
+
+The existing public image `ghcr.io/michielvha/debug-shell:0.6.5` remains accessible at index digest `sha256:f17b499197edea5ce7a90350fbd6bf1f07b6f8b6c8b1b2bdaf347c4235c32813`. The task does not change its Dockerfile or runtime smoke test.
+
 Pinning these direct action refs does not freeze floating nested refs inside upstream composite actions. Those upstream repositories are outside this task's write scope.
 
 Recreation left the existing public GHCR image and chart packages intact but disconnected from the repository. Their repository fields are null. The owner must reconnect package access before release success can be claimed; no credential scope or package access was silently changed. GitHub App access after recreation is also unverified because installation enumeration was denied.
@@ -60,4 +65,4 @@ Review pending.
 
 ## State
 
-Active. Local version calculation, exact-commit review and remote delivery remain pending.
+Active. Local verification passed, including the bundled version calculation. Exact-commit review and remote delivery remain pending.
