@@ -80,6 +80,20 @@ PROPOSAL: Change the display reference to `.semVer` to match the declared output
 
 F-01 is addressed in the following source revision by consistently using semVer in the display output. Re-review pending.
 
+### R-2
+
+Target: `471bd717f34931b72548e8069327ae77d891c2af`
+
+Model: unknown
+
+Isolation: procedural; independent read-only reviewer context reverified the corrected source and unchanged Definition/verification inputs at the exact target.
+
+```text
+NO FINDINGS
+```
+
+F-01 is resolved at R-2. This append-only review bookkeeping does not change the Definition or verification inputs.
+
 ## State
 
-Active. Local verification passed, including the bundled version calculation. Exact-commit review and remote delivery remain pending.
+Active. Local verification and independent exact-commit review passed. Source is ready for PR publication and applicable CI. Merge/release remains pending until the existing GHCR packages are reconnected to the recreated repository.
