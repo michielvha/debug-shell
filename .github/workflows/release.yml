@@ -112,5 +112,5 @@ jobs:
       - name: Display outputs
         run: |
           echo "📦 Image digest: ${{ steps.docker-build.outputs.image-digest }}"
-          echo "📦 Image reference: ghcr.io/${{ github.repository_owner }}/debug-shell:${{ steps.gitversion.outputs.semver }}"
+          echo "📦 Image reference: ghcr.io/${{ github.repository_owner }}/debug-shell:${{ steps.gitversion.outputs.semVer }}"
           echo "🔐 Image is signed with cosign (keyless signing via GitHub OIDC)"

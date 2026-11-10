@@ -61,7 +61,24 @@ Recreation left the existing public GHCR image and chart packages intact but dis
 
 ## Reviews
 
-Review pending.
+### R-1
+
+Target: `0932439997d9742332dd89ac0620d6d121e46258`
+
+Model: unknown
+
+Isolation: procedural; independent read-only reviewer context with the canonical maintenance review protocol and pinned engineering references.
+
+```text
+FINDING: F-01
+KIND: factual
+SEVERITY: nit
+WHERE: `.github/workflows/release.yml:115`
+EVIDENCE: The pinned action declares `semVer`; other workflow references use `.semVer`, but the image-reference display uses `.semver`. The maintenance record calls for consistent use of `semVer`.
+PROPOSAL: Change the display reference to `.semVer` to match the declared output and the other workflow references.
+```
+
+F-01 is addressed in the following source revision by consistently using semVer in the display output. Re-review pending.
 
 ## State
 
