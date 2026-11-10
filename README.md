@@ -1,305 +1,167 @@
-# Debug Shell
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/debug-shell-banner-dark.svg">
+    <img src="assets/debug-shell-banner-light.svg" alt="Debug Shell banner showing a terminal and connected DNS, HTTP, and TCP nodes." width="100%">
+  </picture>
+</h1>
 
-A minimal, community-maintained debug container for network and DNS troubleshooting in Kubernetes and Docker environments.
+<p align="center">
+  <a href="https://github.com/michielvha/debug-shell/actions/workflows/release.yml"><img src="https://github.com/michielvha/debug-shell/actions/workflows/release.yml/badge.svg?branch=main" alt="Container release workflow"></a>
+  <a href="https://github.com/michielvha/debug-shell/actions/workflows/helm-release.yml"><img src="https://github.com/michielvha/debug-shell/actions/workflows/helm-release.yml/badge.svg?branch=main" alt="Helm chart workflow"></a>
+</p>
 
-## Overview
+Debug Shell is a non-root Alpine-based container for network and DNS troubleshooting in Docker and Kubernetes. It supports `linux/amd64` and `linux/arm64`.
 
-Debug Shell is a lightweight Alpine-based container that provides essential network and DNS troubleshooting tools. It's designed as a modern, well-maintained alternative to `nicolaka/netshoot`, focusing on core functionality while maintaining a minimal footprint.
+## Included tools
 
-## Features
+| Area | Tools |
+|------|-------|
+| DNS | `dig`, `nslookup`, `drill` |
+| Connectivity | `ping`, `curl`, `wget`, `nc` |
+| Network inspection | `tcpdump`, `nmap`, `netstat`, `ip`, `ss` |
+| Process debugging | `strace` |
+| Shell | `bash` |
 
-- 🔒 **Security-First Design**: Runs as non-root user, capability-based access, hardened by default
-- 🐳 **Minimal Size**: Based on Alpine Linux (~20-30MB)
-- 🏗️ **Multi-Architecture**: Supports `linux/amd64` and `linux/arm64`
-- 🛠️ **Essential Tools**: Core DNS and network troubleshooting utilities
-- 📦 **OCI Compliant**: Works with any container registry
-- 📚 **Comprehensive Security**: See [Security Hardening Guide](docs/security-hardening.md) for details
-
-## Included Tools
-
-| Category | Tool | Description | Package |
-|----------|------|-------------|---------|
-| **DNS** | `dig` | DNS lookup utility | `bind-tools` |
-| | `nslookup` | Interactive DNS query tool | `bind-tools` |
-| | `drill` | DNS client and resolver | `drill` |
-| **Connectivity** | `ping` | Test network connectivity | `iputils` |
-| | `curl` | HTTP client for testing services | `curl` |
-| | `wget` | HTTP client for downloading files | `wget` |
-| | `nc`/`netcat` | Network utility for reading/writing connections | `netcat-openbsd` |
-| **Inspection** | `tcpdump` | Packet analyzer for network troubleshooting | `tcpdump` |
-| | `nmap` | Network mapper and port scanner | `nmap` |
-| | `netstat` | Network connections and routing table | `net-tools` |
-| | `ip` | Advanced network configuration | `iproute2` |
-| | `ss` | Socket statistics | `iproute2` |
-| **System** | `strace` | System call tracer for debugging | `strace` |
-| | `bash` | Enhanced shell for better script compatibility | `bash` |
-
-## Usage
-
-### Docker
+## Use with Docker
 
 ```bash
-# Run interactively
-docker run -it --rm ghcr.io/michielvha/debug-shell:latest
+# Start an interactive shell
+docker run --rm -it ghcr.io/michielvha/debug-shell:latest
 
-# Run with network access to another container
-docker run -it --rm --network container:<container-name> ghcr.io/michielvha/debug-shell:latest
+# Share another container's network namespace
+docker run --rm -it --network container:<container-name> \
+  ghcr.io/michielvha/debug-shell:latest
 
 # Run with host network (Linux only)
-docker run -it --rm --network host ghcr.io/michielvha/debug-shell:latest
+docker run --rm -it --network host ghcr.io/michielvha/debug-shell:latest
 
-# For tools requiring capabilities (ping, tcpdump, nmap)
-docker run -it --rm --cap-add=NET_RAW ghcr.io/michielvha/debug-shell:latest
+# For ping, tcpdump, or nmap
+docker run --rm -it --cap-add=NET_RAW ghcr.io/michielvha/debug-shell:latest
 
-# For strace debugging
-docker run -it --rm --cap-add=SYS_PTRACE ghcr.io/michielvha/debug-shell:latest
+# For strace
+docker run --rm -it --cap-add=SYS_PTRACE ghcr.io/michielvha/debug-shell:latest
 ```
 
-### Kubernetes
+## Use with Kubernetes
 
-> [!TIP]
-> For production deployments, use our [Kustomize configurations](deployments/kustomize/) or [Helm chart](deployments/helm/debug-shell/) with configurable security profiles.
-
-#### Quick Start with Helm
+### Helm
 
 ```bash
-# Install with moderate security (default)
+# Install the chart from GHCR
 helm install debug-shell oci://ghcr.io/michielvha/charts/debug-shell
 
-# Install with enhanced security (read-only filesystem)
+# Use the enhanced security profile
 helm install debug-shell oci://ghcr.io/michielvha/charts/debug-shell \
   -f https://raw.githubusercontent.com/michielvha/debug-shell/main/deployments/helm/debug-shell/values-enhanced.yaml
 ```
 
-#### Quick Start with Kustomize
+See the [Helm chart guide](deployments/helm/debug-shell/README.md) for profile details and configuration.
+
+### Kustomize
 
 ```bash
-# Apply base configuration (moderate security)
+# Apply the base configuration
 kubectl apply -k https://github.com/michielvha/debug-shell/deployments/kustomize/base
 
-# Apply enhanced security overlay
+# Apply the enhanced security overlay
 kubectl apply -k https://github.com/michielvha/debug-shell/deployments/kustomize/overlays/enhanced-security
+
+# Apply the maximum security overlay
+kubectl apply -k https://github.com/michielvha/debug-shell/deployments/kustomize/overlays/maximum-security
 ```
 
-#### As an Ephemeral Container (Kubernetes 1.23+)
+See the [Kustomize base guide](deployments/kustomize/base/README.md) and the [security overlays](deployments/kustomize/overlays/).
+
+### Ephemeral container
+
+Kubernetes 1.23 and later supports ephemeral containers:
 
 ```bash
 kubectl debug <pod-name> -it --image=ghcr.io/michielvha/debug-shell:latest --target=<container-name>
 ```
 
-#### Deployment Options
+## Common tasks
 
-| Option | Use Case | Documentation |
-|--------|----------|---------------|
-| **[Helm Chart](deployments/helm/debug-shell/)** | Production deployments, CI/CD | [Helm README](deployments/helm/debug-shell/README.md) |
-| **[Kustomize Base](deployments/kustomize/base/)** | Simple deployments, GitOps | [Kustomize README](deployments/kustomize/base/README.md) |
-| **[Kustomize Overlays](deployments/kustomize/overlays/)** | Security profiles, customization | See overlays directory |
-
-## Common Use Cases
-
-### DNS Troubleshooting
+### DNS
 
 ```bash
-# Query DNS
-dig example.com
-nslookup example.com
-drill example.com
-
-# Query specific DNS server
-dig @8.8.8.8 example.com
+dig <service-name>
+nslookup <service-name>
+drill <service-name>
+dig @<dns-server> <service-name>
 ```
 
-### Network Connectivity
+### Connectivity
 
 ```bash
-# Test connectivity
-ping google.com
-curl -v https://example.com
-wget https://example.com
-
-# Test specific port
-nc -zv example.com 443
+ping <service-name>
+curl -v https://<service-url>
+wget https://<service-url>
+nc -zv <service-name> <port>
 ```
 
-### Network Inspection
+### Network state
 
 ```bash
-# View network interfaces
 ip addr show
 ip route show
-
-# View connections
 netstat -tulpn
 ss -tulpn
-
-# Port scanning (requires NET_RAW capability)
-nmap -p 80,443 example.com
-nmap -sn 192.168.1.0/24  # Ping scan
-nmap -sV example.com      # Version detection
-
-# Capture packets (requires NET_RAW capability)
-tcpdump -i any -n
 ```
 
-### Process Debugging
+### Process debugging
 
 ```bash
-# Trace system calls
 strace -p <pid>
 ```
 
-## Image Tags
+## Image tags
 
 | Tag | Description | Example |
 |-----|-------------|---------|
-| `latest` | Latest stable release | `ghcr.io/michielvha/debug-shell:latest` |
-| `{version}` | Semantic version | `ghcr.io/michielvha/debug-shell:1.0.0` |
-| `{sha}` | Git commit SHA | `ghcr.io/michielvha/debug-shell:abc1234` |
+| `latest` | Most recently published image | `ghcr.io/michielvha/debug-shell:latest` |
+| `<version>` | Semantic image version | `ghcr.io/michielvha/debug-shell:<version>` |
+| `<full-commit-sha>` | Full source commit SHA | `ghcr.io/michielvha/debug-shell:<full-commit-sha>` |
 
-## Helm Chart
-
-The Helm chart is published to OCI registry and can be installed directly:
-
-```bash
-# Install latest version
-helm install debug-shell oci://ghcr.io/michielvha/charts/debug-shell
-
-# Install specific version
-helm install debug-shell oci://ghcr.io/michielvha/charts/debug-shell --version 1.0.0
-```
-
-See the [Helm chart documentation](deployments/helm/debug-shell/README.md) for configuration options and security profiles.
+Git tags use a `v` prefix. Image and chart tags use the same semantic version without it. For example, Git tag `vX.Y.Z` maps to image and chart version `X.Y.Z`.
 
 ## Security
 
-**Security is a core design principle of debug-shell.** Unlike other debug containers that run as root, debug-shell is built with security best practices from the ground up.
+The image runs as UID and GID 1000. The Dockerfile sets `NET_RAW` file capabilities on `ping`, `tcpdump`, and `nmap`. Ping is not setuid, and BusyBox has no file capabilities.
 
-### Key Security Features
+Those tools need the runtime to make `NET_RAW` effective. Docker's `no-new-privileges` setting prevents the non-root process from acquiring it through file capabilities, even when the container is started with `--cap-add=NET_RAW`. Runtime behavior can differ, so check effective capabilities when these tools are unavailable. `strace` requires `SYS_PTRACE`.
 
-| Feature | Description |
-|---------|-------------|
-| **Non-root execution** | Runs as `debug` user (UID 1000) by default |
-| **Capability-based access** | Uses Linux capabilities instead of full root privileges |
-| **Minimal attack surface** | Only essential tools, no unnecessary packages |
-| **Regular security updates** | Pinned Alpine version automatically updated via Renovate |
+The Helm chart's moderate profile is the default. It drops all capabilities, adds `NET_RAW`, disallows privilege escalation, uses the `RuntimeDefault` seccomp profile, and sets resource requests and limits. Enhanced uses a read-only filesystem and keeps `NET_RAW`; maximum uses a read-only filesystem and no capabilities, which disables `ping`, `tcpdump`, `nmap`, and `strace`. See the [Helm chart guide](deployments/helm/debug-shell/README.md) and [Kustomize security overlays](deployments/kustomize/overlays/).
 
-### Security Considerations
+Before publication, the container release workflow runs smoke tests and scans the image with Trivy. The scan blocks publication for CRITICAL, HIGH, or MEDIUM findings. See the [container release workflow](.github/workflows/release.yml).
 
-This container follows security best practices:
-
-- **Runs as non-root user** (`debug` user, UID 1000) by default
-- **Minimal capabilities**: Only specific Linux capabilities are granted to binaries that need them
-- **Capability-based access**: Tools requiring elevated privileges use Linux capabilities instead of full root access
-
-### Required Capabilities
-
-Some tools require specific Linux capabilities to function. These must be granted at runtime:
-
-| Tool | Required Capability | Purpose |
-|------|-------------------|---------|
-| `tcpdump` | `NET_RAW` | Packet capture |
-| `ping` | `NET_RAW` | ICMP packets |
-| `nmap` | `NET_RAW` | Network scanning and port detection |
-
-File capabilities are set on the individual `ping`, `tcpdump`, and `nmap` binaries.
-BusyBox has no file capabilities, so its general-purpose commands remain usable when
-all runtime capabilities are dropped. Ping does not use a setuid root bit.
-
-Docker's `--security-opt no-new-privileges` prevents this non-root image from
-acquiring NET_RAW through file capabilities, even with `--cap-add=NET_RAW`.
-DNS and HTTP tools still work in that mode, but packet capture and raw scans need
-a runtime that supplies effective NET_RAW or the Docker invocation shown below
-without `no-new-privileges`. Existing Kubernetes security settings are unchanged;
-adding NET_RAW alone does not establish that the runtime made it effective.
-
-### Docker Usage
-
-Most tools work without additional capabilities. For tools requiring elevated privileges:
-
-| Tool | Capability | Docker Command |
-|-----|-----------|----------------|
-| `ping`, `tcpdump`, `nmap` | `NET_RAW` | `docker run -it --rm --cap-add=NET_RAW ghcr.io/michielvha/debug-shell:latest` |
-| `strace` | `SYS_PTRACE` | `docker run -it --rm --cap-add=SYS_PTRACE ghcr.io/michielvha/debug-shell:latest` |
-
-### Security Best Practices
-
-| Practice | Implementation |
-|----------|----------------|
-| **Run as non-root** | Container defaults to UID 1000 |
-| **Least privilege** | Only add capabilities you actually need |
-| **Drop capabilities** | All deployments drop ALL and add only required |
-| **Read-only filesystem** | Available in Enhanced and Maximum security profiles |
-| **No privilege escalation** | Enabled in all deployment configurations |
-| **Seccomp profile** | RuntimeDefault enabled in all profiles |
-| **Resource limits** | Configured in all deployment options |
-
-### Vulnerability Management
-
-| Aspect | Details |
-|--------|---------|
-| **Automated Scanning** | Every build is scanned with Trivy and fails on CRITICAL, HIGH, or MEDIUM vulnerabilities |
-| **Known Issues** | Tracked in [Security Vulnerabilities](docs/security-vulnerabilities.md) |
-| **Update Strategy** | Dockerfile uses `apk upgrade` to automatically include latest security patches from Alpine repos |
-| **Transparency** | All known vulnerabilities are documented with mitigation status |
-
-### Image Signing and Verification
-
-All container images are signed with [cosign](https://github.com/sigstore/cosign) using keyless signing via GitHub OIDC. This provides supply chain security and ensures image integrity.
-
-#### Verifying Image Signatures
-
-You can verify that an image is signed and hasn't been tampered with:
+The release workflow signs image digests, not tags, with keyless Cosign signing through GitHub OIDC. Verify an image by digest:
 
 ```bash
-# Install cosign (if not already installed)
-brew install cosign  # macOS
-# or download from https://github.com/sigstore/cosign/releases
-
-# Verify image by tag
-cosign verify ghcr.io/michielvha/debug-shell:latest
-
-# Verify image by digest (most secure)
-cosign verify ghcr.io/michielvha/debug-shell@sha256:<digest>
+cosign verify \
+  --certificate-identity-regexp "https://github.com/michielvha/debug-shell/.*" \
+  --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+  ghcr.io/michielvha/debug-shell@sha256:<digest>
 ```
 
-#### How It Works
-
-Images are signed using [cosign](https://github.com/sigstore/cosign) with keyless signing. The GitHub Actions workflow authenticates via OIDC to [Sigstore](https://www.sigstore.dev/), which issues a short-lived certificate used to sign the image. Signatures are recorded in [Rekor](https://rekor.sigstore.dev/), Sigstore's public transparency log.
-
-Images are signed by both digest and tag. The digest signature is immutable; tag signatures allow verification without needing the exact digest.
-
-> [!NOTE]
-> No long-lived keys are required. The OIDC token from GitHub Actions is used automatically, and certificates expire quickly.
-
-#### Capabilities
-
-| Feature | Description |
-|---------|-------------|
-| **Tamper detection** | Modified images will fail verification |
-| **Supply chain integrity** | Verifies the image originated from this repository's build process |
-| **Public audit trail** | All signatures are recorded in Rekor and can be queried |
-| **Policy enforcement** | Compatible with Kubernetes admission controllers like [Kyverno](https://kyverno.io/) to enforce signature verification |
-
-## Release Versioning
+## Release versioning
 
 Both release workflows use the configuration bundled with the SHA-pinned
 `gitversion-tag-action`, without a repository-specific GitVersion file.
-Git tags use the `v` prefix; image and chart versions omit it.
 
-## Testing the Image
+## Test a local image
 
-Build and test locally:
+Build the image and run its smoke tests:
 
 ```bash
 docker build -t debug-shell:test .
 bash tests/image-smoke.sh debug-shell:test
 ```
 
-The smoke tests run as UID 1000 with a read-only filesystem. They check DNS tool
-availability and local HTTP connectivity without capabilities, then loopback ping,
-packet capture and raw scanning with only NET_RAW. The container release workflow
-runs the same tests before its vulnerability scan and publication jobs.
+The smoke tests check the image as UID 1000 under read-only and capability-restricted
+runtime configurations. The container release workflow runs them before scanning
+and publication.
 
 ## Support
 
-For issues, questions, or contributions, please open an issue in the repository.
+For issues, questions, or contributions, [open an issue](https://github.com/michielvha/debug-shell/issues).
